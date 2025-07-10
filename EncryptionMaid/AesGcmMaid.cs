@@ -75,6 +75,8 @@ public static class AesGcmMaid {
     /// <returns>
     /// The encrypted bytes.
     /// </returns>
+    /// <exception cref="PlatformNotSupportedException"/>
+    /// <exception cref="CryptographicException"/>
     public static byte[] Encrypt(string PlainText, string Password) {
         byte[] PlainBytes = Encoding.UTF8.GetBytes(PlainText);
         byte[] Key = SHA256.HashData(Encoding.UTF8.GetBytes(Password));
@@ -126,6 +128,9 @@ public static class AesGcmMaid {
     /// <returns>
     /// The decrypted bytes.
     /// </returns>
+    /// <exception cref="PlatformNotSupportedException"/>
+    /// <exception cref="CryptographicException"/>
+    /// <exception cref="AuthenticationTagMismatchException"/>
     public static string Decrypt(scoped ReadOnlySpan<byte> EncryptedBytes, string Password) {
         byte[] Key = SHA256.HashData(Encoding.UTF8.GetBytes(Password));
         byte[] PlainBytes = Decrypt(EncryptedBytes, Key);
