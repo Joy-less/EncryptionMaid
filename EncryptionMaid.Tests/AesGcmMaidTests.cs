@@ -1,6 +1,6 @@
 namespace EncryptionMaid.Tests;
 
-public class AesCbcMaidTests {
+public class AesGcmMaidTests {
     [Theory]
     [InlineData("Hello, world!", "password123")]
     [InlineData("Play Konekomi Castle", "super password 321")]
