@@ -9,6 +9,7 @@ namespace EncryptionMaid;
 ///   <item>Encrypting the same input twice results in different outputs using a randomly-generated IV.</item>
 ///   <item>Decryption does not verify whether the encrypted data was tampered with.</item>
 /// </list>
+/// Generally prefer <see cref="AesGcmMaid"/> if supported.
 /// </summary>
 public static class AesCbcMaid {
     /// <summary>
