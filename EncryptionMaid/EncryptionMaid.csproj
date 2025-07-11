@@ -9,6 +9,7 @@
 
   <PropertyGroup>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Title>EncryptionMaid</Title>
     <Authors>Joyless</Authors>
     <Description>Super simple encryption in C#.</Description>
