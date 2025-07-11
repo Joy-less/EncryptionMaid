@@ -28,6 +28,11 @@ public static class AesGcmMaid {
     private const int StackallocMaxSize = 128;
 
     /// <summary>
+    /// Returns whether <see cref="AesGcm"/> is supported on the current platform.
+    /// </summary>
+    public static bool IsSupported => AesGcm.IsSupported;
+
+    /// <summary>
     /// Converts the plain bytes to encrypted bytes using the given key.
     /// </summary>
     /// <param name="PlainBytes">
