@@ -20,7 +20,7 @@ public static class AesCbcMaid {
     /// <summary>
     /// The maximum number of bytes to dynamically allocate on the stack.
     /// </summary>
-    private const int StackallocMaxSize = 128;
+    private const int StackAllocMaxSize = 32;
 
     /// <summary>
     /// Converts the plain bytes to encrypted bytes using the given key.
@@ -43,7 +43,7 @@ public static class AesCbcMaid {
         Aes.Key = Key;
 
         int CipherBytesLength = Aes.GetCiphertextLengthCbc(PlainBytes.Length);
-        Span<byte> CipherBytes = CipherBytesLength <= StackallocMaxSize
+        Span<byte> CipherBytes = CipherBytesLength <= StackAllocMaxSize
             ? stackalloc byte[CipherBytesLength]
             : new byte[CipherBytesLength];
         int CipherBytesWritten = Aes.EncryptCbc(PlainBytes, IV, CipherBytes);

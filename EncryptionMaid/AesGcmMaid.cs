@@ -25,7 +25,7 @@ public static class AesGcmMaid {
     /// <summary>
     /// The maximum number of bytes to dynamically allocate on the stack.
     /// </summary>
-    private const int StackallocMaxSize = 128;
+    private const int StackAllocMaxSize = 32;
 
     /// <summary>
     /// Returns whether <see cref="AesGcm"/> is supported on the current platform.
@@ -53,7 +53,7 @@ public static class AesGcmMaid {
         Span<byte> Nonce = stackalloc byte[NonceSize];
         RandomNumberGenerator.Fill(Nonce);
 
-        Span<byte> CipherBytes = PlainBytes.Length <= StackallocMaxSize
+        Span<byte> CipherBytes = PlainBytes.Length <= StackAllocMaxSize
             ? stackalloc byte[PlainBytes.Length]
             : new byte[PlainBytes.Length];
 
