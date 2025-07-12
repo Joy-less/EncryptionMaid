@@ -4,14 +4,14 @@ using System.Security.Cryptography;
 namespace EncryptionMaid;
 
 /// <summary>
-/// A simple symmetric encryption implementation using AES-CBC.
+/// A simple symmetric encryption implementation using AES-CBC with HMAC.
 /// <list type="bullet">
 ///   <item>Encrypting the same input twice results in different outputs using a randomly-generated IV.</item>
-///   <item>Decryption does not verify whether the encrypted data was tampered with.</item>
+///   <item>Decryption verifies whether the encrypted data was tampered with using a HMAC.</item>
 /// </list>
 /// Generally prefer <see cref="AesGcmMaid"/> if supported.
 /// </summary>
-public static class AesCbcMaid {
+public static class AesCbcHmacMaid {
     /// <summary>
     /// The size in bytes of the initialization vector (salt) used to ensure identical inputs result in different outputs.
     /// The recommended size is 128 bits (16 bytes).
@@ -21,6 +21,29 @@ public static class AesCbcMaid {
     /// The maximum number of bytes to dynamically allocate on the stack.
     /// </summary>
     private const int StackAllocMaxSize = 32;
+    /// <summary>
+    /// The size in bytes of the derived encryption key.
+    /// Must be 256 bits (32 bytes) to use HMACSHA256.
+    /// </summary>
+    private const int AesKeySize = 32;
+    /// <summary>
+    /// The size in bytes of the salt for the derived encryption key.
+    /// </summary>
+    private const int AesKeySaltSize = 16;
+    /// <summary>
+    /// The size in bytes of the hash-based message authentication code used to verify the encrypted data wasn't tampered with.
+    /// Must be 256 bits (32 bytes) to use HMACSHA256.
+    /// </summary>
+    private const int HmacSize = 32;
+    /// <summary>
+    /// The size in bytes of the encryption key for the hash-based message authentication code.
+    /// Must be 256 bits (32 bytes) to use HMACSHA256.
+    /// </summary>
+    private const int HmacKeySize = 32;
+    /// <summary>
+    /// The size in bytes of the salt for the encryption key for the hash-based message authentication code.
+    /// </summary>
+    private const int HmacKeySaltSize = 16;
 
     /// <summary>
     /// Converts the plain bytes to encrypted bytes using the given key.
@@ -29,7 +52,7 @@ public static class AesCbcMaid {
     /// The plain bytes to encrypt.
     /// </param>
     /// <param name="Key">
-    /// The encryption key. Must be a supported length (16, 24, or 32 bytes).
+    /// The encryption key.
     /// </param>
     /// <returns>
     /// The encrypted bytes.
@@ -39,8 +62,14 @@ public static class AesCbcMaid {
         Span<byte> IV = stackalloc byte[IVSize];
         RandomNumberGenerator.Fill(IV);
 
+        Span<byte> AesKeySalt = stackalloc byte[HmacKeySaltSize];
+        RandomNumberGenerator.Fill(AesKeySalt);
+
+        Span<byte> AesKey = stackalloc byte[HmacKeySize];
+        HKDF.DeriveKey(HashAlgorithmName.SHA256, Key, AesKey, AesKeySalt, default);
+
         using Aes Aes = Aes.Create();
-        Aes.Key = Key.ToArray();
+        Aes.Key = AesKey.ToArray();
 
         int CipherBytesLength = Aes.GetCiphertextLengthCbc(PlainBytes.Length);
         Span<byte> CipherBytes = CipherBytesLength <= StackAllocMaxSize
@@ -49,7 +78,19 @@ public static class AesCbcMaid {
         int CipherBytesWritten = Aes.EncryptCbc(PlainBytes, IV, CipherBytes);
         CipherBytes = CipherBytes[..CipherBytesWritten];
 
-        byte[] EncryptedBytes = [.. IV, .. CipherBytes];
+        Span<byte> HmacKeySalt = stackalloc byte[HmacKeySaltSize];
+        RandomNumberGenerator.Fill(HmacKeySalt);
+
+        Span<byte> HmacKey = stackalloc byte[HmacKeySize];
+        HKDF.DeriveKey(HashAlgorithmName.SHA256, Key, HmacKey, HmacKeySalt, default);
+
+        byte[] HmacInput = [.. AesKeySalt, .. IV, .. CipherBytes];
+
+        Span<byte> HmacBytes = stackalloc byte[HmacSize];
+        int HmacBytesWritten = HMACSHA256.HashData(HmacKey, HmacInput, HmacBytes);
+        HmacBytes = HmacBytes[..HmacBytesWritten];
+
+        byte[] EncryptedBytes = [.. AesKeySalt, .. IV, .. CipherBytes, .. HmacKeySalt, .. HmacBytes];
         return EncryptedBytes;
     }
     /// <summary>
@@ -81,20 +122,40 @@ public static class AesCbcMaid {
     /// The encrypted bytes to decrypt.
     /// </param>
     /// <param name="Key">
-    /// The encryption key. Must be a supported length (16, 24, 32).
+    /// The encryption key.
     /// </param>
     /// <returns>
     /// The decrypted bytes.
     /// </returns>
     /// <exception cref="CryptographicException"/>
     public static byte[] Decrypt(scoped ReadOnlySpan<byte> EncryptedBytes, scoped ReadOnlySpan<byte> Key) {
-        ReadOnlySpan<byte> IV = EncryptedBytes[..IVSize];
-        ReadOnlySpan<byte> CipherBytes = EncryptedBytes[IVSize..];
+        ReadOnlySpan<byte> AesKeySalt = EncryptedBytes[..AesKeySaltSize];
+        ReadOnlySpan<byte> IV = EncryptedBytes[AesKeySaltSize..(AesKeySaltSize + IVSize)];
+        ReadOnlySpan<byte> CipherBytes = EncryptedBytes[(AesKeySaltSize + IVSize)..^(HmacKeySaltSize + HmacSize)];
+        ReadOnlySpan<byte> HmacKeySalt = EncryptedBytes[^(HmacKeySaltSize + HmacSize)..^HmacSize];
+        ReadOnlySpan<byte> HmacBytes = EncryptedBytes[^HmacSize..];
+
+        Span<byte> HmacKey = stackalloc byte[HmacKeySize];
+        HKDF.DeriveKey(HashAlgorithmName.SHA256, Key, HmacKey, HmacKeySalt, default);
+
+        byte[] HmacInput = [.. AesKeySalt, .. IV, .. CipherBytes];
+
+        Span<byte> TestHmacBytes = stackalloc byte[HmacSize];
+        int TestHmacBytesWritten = HMACSHA256.HashData(HmacKey, HmacInput, TestHmacBytes);
+        TestHmacBytes = TestHmacBytes[..TestHmacBytesWritten];
+
+        if (!CryptographicOperations.FixedTimeEquals(HmacBytes, TestHmacBytes)) {
+            throw new AuthenticationTagMismatchException();
+        }
+
+        Span<byte> AesKey = stackalloc byte[HmacKeySize];
+        HKDF.DeriveKey(HashAlgorithmName.SHA256, Key, AesKey, AesKeySalt, default);
 
         using Aes Aes = Aes.Create();
-        Aes.Key = Key.ToArray();
+        Aes.Key = AesKey.ToArray();
 
         byte[] PlainBytes = Aes.DecryptCbc(CipherBytes, IV);
+
         return PlainBytes;
     }
     /// <summary>
