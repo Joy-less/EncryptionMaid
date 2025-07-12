@@ -40,8 +40,7 @@ public static class AesCbcHmacMaid {
         RandomNumberGenerator.Fill(IV);
 
         Span<byte> KeyHash = stackalloc byte[SHA256.HashSizeInBytes];
-        int KeyHashWritten = SHA256.HashData(Key, KeyHash);
-        KeyHash = KeyHash[..KeyHashWritten];
+        SHA256.HashData(Key, KeyHash);
 
         Span<byte> AesKey = KeyHash[..(SHA256.HashSizeInBytes / 2)];
         Span<byte> HmacKey = KeyHash[(SHA256.HashSizeInBytes / 2)..];
@@ -53,14 +52,12 @@ public static class AesCbcHmacMaid {
         Span<byte> CipherBytes = CipherBytesLength <= StackAllocMaxSize
             ? stackalloc byte[CipherBytesLength]
             : new byte[CipherBytesLength];
-        int CipherBytesWritten = Aes.EncryptCbc(PlainBytes, IV, CipherBytes);
-        CipherBytes = CipherBytes[..CipherBytesWritten];
+        Aes.EncryptCbc(PlainBytes, IV, CipherBytes);
 
         byte[] HmacInput = [.. IV, .. CipherBytes];
 
         Span<byte> HmacBytes = stackalloc byte[HMACSHA256.HashSizeInBytes];
-        int HmacBytesWritten = HMACSHA256.HashData(HmacKey, HmacInput, HmacBytes);
-        HmacBytes = HmacBytes[..HmacBytesWritten];
+        HMACSHA256.HashData(HmacKey, HmacInput, HmacBytes);
 
         byte[] EncryptedBytes = [.. IV, .. CipherBytes, .. HmacBytes];
         return EncryptedBytes;
@@ -107,8 +104,7 @@ public static class AesCbcHmacMaid {
         ReadOnlySpan<byte> HmacBytes = EncryptedBytes[^HMACSHA256.HashSizeInBytes..];
 
         Span<byte> KeyHash = stackalloc byte[SHA256.HashSizeInBytes];
-        int KeyHashWritten = SHA256.HashData(Key, KeyHash);
-        KeyHash = KeyHash[..KeyHashWritten];
+        SHA256.HashData(Key, KeyHash);
 
         Span<byte> AesKey = KeyHash[..(SHA256.HashSizeInBytes / 2)];
         Span<byte> HmacKey = KeyHash[(SHA256.HashSizeInBytes / 2)..];
@@ -116,8 +112,7 @@ public static class AesCbcHmacMaid {
         byte[] HmacInput = [.. IV, .. CipherBytes];
 
         Span<byte> TestHmacBytes = stackalloc byte[HMACSHA256.HashSizeInBytes];
-        int TestHmacBytesWritten = HMACSHA256.HashData(HmacKey, HmacInput, TestHmacBytes);
-        TestHmacBytes = TestHmacBytes[..TestHmacBytesWritten];
+        HMACSHA256.HashData(HmacKey, HmacInput, TestHmacBytes);
 
         if (!CryptographicOperations.FixedTimeEquals(HmacBytes, TestHmacBytes)) {
             throw new AuthenticationTagMismatchException();
@@ -127,7 +122,6 @@ public static class AesCbcHmacMaid {
         Aes.Key = AesKey.ToArray();
 
         byte[] PlainBytes = Aes.DecryptCbc(CipherBytes, IV);
-
         return PlainBytes;
     }
     /// <summary>

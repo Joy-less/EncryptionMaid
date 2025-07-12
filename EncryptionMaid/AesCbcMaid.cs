@@ -46,8 +46,7 @@ public static class AesCbcMaid {
         Span<byte> CipherBytes = CipherBytesLength <= StackAllocMaxSize
             ? stackalloc byte[CipherBytesLength]
             : new byte[CipherBytesLength];
-        int CipherBytesWritten = Aes.EncryptCbc(PlainBytes, IV, CipherBytes);
-        CipherBytes = CipherBytes[..CipherBytesWritten];
+        Aes.EncryptCbc(PlainBytes, IV, CipherBytes);
 
         byte[] EncryptedBytes = [.. IV, .. CipherBytes];
         return EncryptedBytes;
