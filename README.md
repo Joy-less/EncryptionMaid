@@ -38,6 +38,23 @@ byte[] EncryptedBytes = AesCbcMaid.Encrypt(Input, Password);
 string DecryptedInput = AesCbcMaid.Decrypt(EncryptedBytes, Password);
 ```
 
+### AesCbcHmacMaid
+
+[AES-CBC](https://www.studysmarter.co.uk/explanations/computer-science/cybersecurity-in-computer-science/cbc-mode) with [HMAC](https://security.stackexchange.com/a/63134) ensures confidentiality and authenticity:
+- A randomly-generated initialization vector (IV) ensures identical inputs produce different outputs.
+- A hash message authentication code (HMAC) ensures the encrypted data was not tampered with.
+
+```cs
+using EncryptionMaid;
+
+string Input = "my data to encrypt";
+string Password = "my super secret password";
+
+byte[] EncryptedBytes = AesCbcHmacMaid.Encrypt(Input, Password);
+
+string DecryptedInput = AesCbcHmacMaid.Decrypt(EncryptedBytes, Password);
+```
+
 ## Disclaimer
 
 This implementation has not been audited, so it should not be used for high-stakes encryption.
