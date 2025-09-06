@@ -5,8 +5,8 @@ public class AesGcmMaidTests {
     [InlineData("Hello, world!", "password123")]
     [InlineData("Play Konekomi Castle", "super password 321")]
     public void EncryptDecryptPasswordTest(string Input, string Password) {
-        byte[] EncryptedBytes = AesGcmMaid.Encrypt(Input, Password);
-        string DecryptedInput = AesGcmMaid.Decrypt(EncryptedBytes, Password);
+        byte[] EncryptedBytes = AesGcmMaid.EncryptWithPassword(Input, Password, 600_000);
+        string DecryptedInput = AesGcmMaid.DecryptWithPassword(EncryptedBytes, Password, 600_000);
         DecryptedInput.ShouldBe(Input);
     }
     [Theory]
@@ -20,8 +20,8 @@ public class AesGcmMaidTests {
     [Theory]
     [InlineData("Hello, world!", "password123")]
     public void EncryptNonceTest(string Input, string Password) {
-        byte[] EncryptedBytes1 = AesGcmMaid.Encrypt(Input, Password);
-        byte[] EncryptedBytes2 = AesGcmMaid.Encrypt(Input, Password);
+        byte[] EncryptedBytes1 = AesGcmMaid.EncryptWithPassword(Input, Password, 600_000);
+        byte[] EncryptedBytes2 = AesGcmMaid.EncryptWithPassword(Input, Password, 600_000);
         EncryptedBytes1.ShouldNotBe(EncryptedBytes2);
     }
 }
