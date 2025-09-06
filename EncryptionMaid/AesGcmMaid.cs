@@ -25,7 +25,7 @@ public static class AesGcmMaid {
     /// <summary>
     /// The maximum number of bytes to dynamically allocate on the stack.
     /// </summary>
-    private const int StackAllocMaxSize = 32;
+    private const int StackAllocMaxSize = 256;
 
     /// <summary>
     /// Returns whether <see cref="AesGcm"/> is supported on the current platform.

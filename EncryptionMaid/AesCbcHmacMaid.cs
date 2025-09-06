@@ -20,7 +20,7 @@ public static class AesCbcHmacMaid {
     /// <summary>
     /// The maximum number of bytes to dynamically allocate on the stack.
     /// </summary>
-    private const int StackAllocMaxSize = 32;
+    private const int StackAllocMaxSize = 256;
 
     /// <summary>
     /// Converts the plain bytes to encrypted bytes using the given key.
