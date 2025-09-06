@@ -1,5 +1,7 @@
 # EncryptionMaid
 
+[![NuGet](https://img.shields.io/nuget/v/EncryptionMaid.svg)](https://www.nuget.org/packages/EncryptionMaid)
+
 Super simple encryption in C#.
 
 ## Usage
