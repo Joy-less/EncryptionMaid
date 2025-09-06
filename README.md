@@ -59,4 +59,4 @@ string DecryptedInput = AesCbcHmacMaid.DecryptWithPassword(EncryptedBytes, Passw
 
 ## Disclaimer
 
-This implementation has not been audited, so it should not be used for high-stakes encryption.
+This implementation has not been audited, so use at your own risk.
