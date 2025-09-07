@@ -71,6 +71,43 @@ public static class AesCbcHmacMaid {
         return EncryptedBytes;
     }
     /// <summary>
+    /// Converts the plain bytes to encrypted bytes using the given password.
+    /// </summary>
+    /// <remarks>
+    /// The password is converted to bytes using UTF-8.<br/>
+    /// The key is derived from the password using PBKDF2 with SHA-256.
+    /// </remarks>
+    /// <param name="PlainBytes">
+    /// The plain bytes to encrypt.
+    /// </param>
+    /// <param name="Password">
+    /// The password used to create the encryption key.
+    /// </param>
+    /// <param name="Iterations">
+    /// The number of iterations for deriving the key using PBKDF2 with SHA-256.
+    /// <list type="bullet">
+    ///   <item>Microsoft recommends at least <c>100_000</c> (<see href="https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca5387">link</see>).</item>
+    ///   <item>OWASP recommends <c>600_000</c> (<see href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2">link</see>).</item>
+    /// </list>
+    /// </param>
+    /// <returns>
+    /// The encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext + hmac(32)</c>.
+    /// </returns>
+    /// <exception cref="CryptographicException"/>
+    public static byte[] EncryptWithPassword(scoped ReadOnlySpan<byte> PlainBytes, string Password, int Iterations) {
+        byte[] PasswordBytes = Encoding.UTF8.GetBytes(Password);
+
+        Span<byte> Salt = stackalloc byte[16];
+        RandomNumberGenerator.Fill(Salt);
+
+        byte[] Key = Rfc2898DeriveBytes.Pbkdf2(PasswordBytes, Salt, Iterations, HashAlgorithmName.SHA256, outputLength: DerivedKeySize);
+
+        byte[] EncryptedBytesNoSalt = Encrypt(PlainBytes, Key);
+
+        byte[] EncryptedBytes = [.. Salt, .. EncryptedBytesNoSalt];
+        return EncryptedBytes;
+    }
+    /// <summary>
     /// Converts the plain text to encrypted bytes using the given password.
     /// </summary>
     /// <remarks>
@@ -94,18 +131,10 @@ public static class AesCbcHmacMaid {
     /// The encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext + hmac(32)</c>.
     /// </returns>
     /// <exception cref="CryptographicException"/>
-    public static byte[] EncryptWithPassword(string PlainText, string Password, int Iterations) {
+    public static byte[] EncryptStringWithPassword(string PlainText, string Password, int Iterations) {
         byte[] PlainBytes = Encoding.UTF8.GetBytes(PlainText);
-        byte[] PasswordBytes = Encoding.UTF8.GetBytes(Password);
 
-        Span<byte> Salt = stackalloc byte[16];
-        RandomNumberGenerator.Fill(Salt);
-
-        byte[] Key = Rfc2898DeriveBytes.Pbkdf2(PasswordBytes, Salt, Iterations, HashAlgorithmName.SHA256, outputLength: DerivedKeySize);
-
-        byte[] EncryptedBytesNoSalt = Encrypt(PlainBytes, Key);
-
-        byte[] EncryptedBytes = [.. Salt, .. EncryptedBytesNoSalt];
+        byte[] EncryptedBytes = EncryptWithPassword(PlainBytes, Password, Iterations);
         return EncryptedBytes;
     }
     /// <summary>
@@ -150,7 +179,7 @@ public static class AesCbcHmacMaid {
         return PlainBytes;
     }
     /// <summary>
-    /// Converts the encrypted bytes to plain text using the given password.<br/>
+    /// Converts the encrypted bytes to plain bytes using the given password.<br/>
     /// Accepts encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext + hmac(32)</c>.
     /// </summary>
     /// <remarks>
@@ -175,7 +204,7 @@ public static class AesCbcHmacMaid {
     /// </returns>
     /// <exception cref="CryptographicException"/>
     /// <exception cref="AuthenticationTagMismatchException"/>
-    public static string DecryptWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, string Password, int Iterations) {
+    public static byte[] DecryptWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, string Password, int Iterations) {
         byte[] PasswordBytes = Encoding.UTF8.GetBytes(Password);
 
         ReadOnlySpan<byte> Salt = EncryptedBytes[..DerivedSaltSize];
@@ -183,6 +212,36 @@ public static class AesCbcHmacMaid {
         byte[] Key = Rfc2898DeriveBytes.Pbkdf2(PasswordBytes, Salt, Iterations, HashAlgorithmName.SHA256, outputLength: DerivedKeySize);
 
         byte[] PlainBytes = Decrypt(EncryptedBytes[DerivedSaltSize..], Key);
+        return PlainBytes;
+    }
+    /// <summary>
+    /// Converts the encrypted bytes to plain text using the given password.<br/>
+    /// Accepts encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext + hmac(32)</c>.
+    /// </summary>
+    /// <remarks>
+    /// The plain bytes and password are converted to bytes using UTF-8.<br/>
+    /// The key is derived from the password using PBKDF2 with SHA-256.
+    /// </remarks>
+    /// <param name="EncryptedBytes">
+    /// The encrypted bytes to decrypt and authenticate.
+    /// </param>
+    /// <param name="Password">
+    /// The password used to create the encryption key.
+    /// </param>
+    /// <param name="Iterations">
+    /// The number of iterations for deriving the key using PBKDF2 with SHA-256.
+    /// <list type="bullet">
+    ///   <item>Microsoft recommends at least <c>100_000</c> (<see href="https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca5387">link</see>).</item>
+    ///   <item>OWASP recommends <c>600_000</c> (<see href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pbkdf2">link</see>).</item>
+    /// </list>
+    /// </param>
+    /// <returns>
+    /// The decrypted text.
+    /// </returns>
+    /// <exception cref="CryptographicException"/>
+    /// <exception cref="AuthenticationTagMismatchException"/>
+    public static string DecryptStringWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, string Password, int Iterations) {
+        byte[] PlainBytes = DecryptWithPassword(EncryptedBytes, Password, Iterations);
 
         string PlainText = Encoding.UTF8.GetString(PlainBytes);
         return PlainText;

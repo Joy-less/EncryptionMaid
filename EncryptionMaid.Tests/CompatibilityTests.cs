@@ -7,7 +7,7 @@ public class CompatibilityTests {
     [InlineData("Hello, world!", "password123")]
     [InlineData("Play Konekomi Castle", "super password 321")]
     public void GcmFromEncryptionMaidToAesBridgeTest(string Input, string Password) {
-        byte[] EncryptedBytes = AesGcmMaid.EncryptWithPassword(Input, Password, 100_000);
+        byte[] EncryptedBytes = AesGcmMaid.EncryptStringWithPassword(Input, Password, 100_000);
 
         string DecryptedBytes = Encoding.UTF8.GetString(AesBridge.Gcm.DecryptBin(EncryptedBytes, Password));
 
@@ -19,7 +19,7 @@ public class CompatibilityTests {
     public void GcmFromAesBridgeToEncryptionMaidTest(string Input, string Password) {
         byte[] EncryptedBytes = AesBridge.Gcm.EncryptBin(Input, Password);
 
-        string DecryptedBytes = AesGcmMaid.DecryptWithPassword(EncryptedBytes, Password, 100_000);
+        string DecryptedBytes = AesGcmMaid.DecryptStringWithPassword(EncryptedBytes, Password, 100_000);
 
         DecryptedBytes.ShouldBe(Input);
     }

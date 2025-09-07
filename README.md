@@ -18,9 +18,9 @@ using EncryptionMaid;
 string Input = "my data to encrypt";
 string Password = "my super secret password";
 
-byte[] EncryptedBytes = AesGcmMaid.EncryptWithPassword(Input, Password, 600_000);
+byte[] EncryptedBytes = AesGcmMaid.EncryptStringWithPassword(Input, Password, 600_000);
 
-string DecryptedInput = AesGcmMaid.DecryptWithPassword(EncryptedBytes, Password, 600_000);
+string DecryptedInput = AesGcmMaid.DecryptStringWithPassword(EncryptedBytes, Password, 600_000);
 ```
 
 ### AesCbcMaid
@@ -35,9 +35,9 @@ using EncryptionMaid;
 string Input = "my data to encrypt";
 string Password = "my super secret password";
 
-byte[] EncryptedBytes = AesCbcMaid.EncryptWithPassword(Input, Password, 600_000);
+byte[] EncryptedBytes = AesCbcMaid.EncryptStringWithPassword(Input, Password, 600_000);
 
-string DecryptedInput = AesCbcMaid.DecryptWithPassword(EncryptedBytes, Password, 600_000);
+string DecryptedInput = AesCbcMaid.DecryptStringWithPassword(EncryptedBytes, Password, 600_000);
 ```
 
 ### AesCbcHmacMaid
@@ -52,9 +52,9 @@ using EncryptionMaid;
 string Input = "my data to encrypt";
 string Password = "my super secret password";
 
-byte[] EncryptedBytes = AesCbcHmacMaid.EncryptWithPassword(Input, Password, 600_000);
+byte[] EncryptedBytes = AesCbcHmacMaid.EncryptStringWithPassword(Input, Password, 600_000);
 
-string DecryptedInput = AesCbcHmacMaid.DecryptWithPassword(EncryptedBytes, Password, 600_000);
+string DecryptedInput = AesCbcHmacMaid.DecryptStringWithPassword(EncryptedBytes, Password, 600_000);
 ```
 
 ## Disclaimer

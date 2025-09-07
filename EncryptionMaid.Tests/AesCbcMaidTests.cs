@@ -5,8 +5,8 @@ public class AesCbcMaidTests {
     [InlineData("Hello, world!", "password123")]
     [InlineData("Play Konekomi Castle", "super password 321")]
     public void EncryptDecryptPasswordTest(string Input, string Password) {
-        byte[] EncryptedBytes = AesCbcMaid.EncryptWithPassword(Input, Password, 600_000);
-        string DecryptedInput = AesCbcMaid.DecryptWithPassword(EncryptedBytes, Password, 600_000);
+        byte[] EncryptedBytes = AesCbcMaid.EncryptStringWithPassword(Input, Password, 600_000);
+        string DecryptedInput = AesCbcMaid.DecryptStringWithPassword(EncryptedBytes, Password, 600_000);
         DecryptedInput.ShouldBe(Input);
     }
     [Theory]
@@ -20,8 +20,8 @@ public class AesCbcMaidTests {
     [Theory]
     [InlineData("Hello, world!", "password123")]
     public void EncryptIVTest(string Input, string Password) {
-        byte[] EncryptedBytes1 = AesCbcMaid.EncryptWithPassword(Input, Password, 600_000);
-        byte[] EncryptedBytes2 = AesCbcMaid.EncryptWithPassword(Input, Password, 600_000);
+        byte[] EncryptedBytes1 = AesCbcMaid.EncryptStringWithPassword(Input, Password, 600_000);
+        byte[] EncryptedBytes2 = AesCbcMaid.EncryptStringWithPassword(Input, Password, 600_000);
         EncryptedBytes1.ShouldNotBe(EncryptedBytes2);
     }
 }
