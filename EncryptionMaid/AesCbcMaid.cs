@@ -83,8 +83,12 @@ public static class AesCbcMaid {
     /// The encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext</c>.
     /// </returns>
     /// <exception cref="CryptographicException"/>
-    public static byte[] EncryptWithPassword(scoped ReadOnlySpan<byte> PlainBytes, string Password, int Iterations) {
-        byte[] PasswordBytes = Encoding.UTF8.GetBytes(Password);
+    public static byte[] EncryptWithPassword(scoped ReadOnlySpan<byte> PlainBytes, scoped ReadOnlySpan<char> Password, int Iterations) {
+        int PasswordBytesCount = Encoding.UTF8.GetByteCount(Password);
+        Span<byte> PasswordBytes = PasswordBytesCount <= StackAllocMaxSize
+            ? stackalloc byte[PasswordBytesCount]
+            : new byte[PasswordBytesCount];
+        Encoding.UTF8.GetBytes(Password, PasswordBytes);
 
         Span<byte> Salt = stackalloc byte[16];
         RandomNumberGenerator.Fill(Salt);
@@ -120,7 +124,7 @@ public static class AesCbcMaid {
     /// The encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext</c>.
     /// </returns>
     /// <exception cref="CryptographicException"/>
-    public static byte[] EncryptStringWithPassword(string PlainText, string Password, int Iterations) {
+    public static byte[] EncryptStringWithPassword(string PlainText, scoped ReadOnlySpan<char> Password, int Iterations) {
         byte[] PlainBytes = Encoding.UTF8.GetBytes(PlainText);
 
         byte[] EncryptedBytes = EncryptWithPassword(PlainBytes, Password, Iterations);
@@ -175,8 +179,12 @@ public static class AesCbcMaid {
     /// The decrypted bytes.
     /// </returns>
     /// <exception cref="CryptographicException"/>
-    public static byte[] DecryptWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, string Password, int Iterations) {
-        byte[] PasswordBytes = Encoding.UTF8.GetBytes(Password);
+    public static byte[] DecryptWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, scoped ReadOnlySpan<char> Password, int Iterations) {
+        int PasswordBytesCount = Encoding.UTF8.GetByteCount(Password);
+        Span<byte> PasswordBytes = PasswordBytesCount <= StackAllocMaxSize
+            ? stackalloc byte[PasswordBytesCount]
+            : new byte[PasswordBytesCount];
+        Encoding.UTF8.GetBytes(Password, PasswordBytes);
 
         ReadOnlySpan<byte> Salt = EncryptedBytes[..DerivedSaltSize];
 
@@ -210,7 +218,7 @@ public static class AesCbcMaid {
     /// The decrypted text.
     /// </returns>
     /// <exception cref="CryptographicException"/>
-    public static string DecryptStringWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, string Password, int Iterations) {
+    public static string DecryptStringWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, scoped ReadOnlySpan<char> Password, int Iterations) {
         byte[] PlainBytes = DecryptWithPassword(EncryptedBytes, Password, Iterations);
 
         string PlainText = Encoding.UTF8.GetString(PlainBytes);
