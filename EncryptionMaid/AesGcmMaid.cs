@@ -140,8 +140,12 @@ public static class AesGcmMaid {
     /// </returns>
     /// <exception cref="PlatformNotSupportedException"/>
     /// <exception cref="CryptographicException"/>
-    public static byte[] EncryptStringWithPassword(string PlainText, scoped ReadOnlySpan<char> Password, int Iterations) {
-        byte[] PlainBytes = Encoding.UTF8.GetBytes(PlainText);
+    public static byte[] EncryptStringWithPassword(scoped ReadOnlySpan<char> PlainText, scoped ReadOnlySpan<char> Password, int Iterations) {
+        int PlainBytesCount = Encoding.UTF8.GetByteCount(PlainText);
+        Span<byte> PlainBytes = PlainBytesCount <= StackAllocMaxSize
+            ? stackalloc byte[PlainBytesCount]
+            : new byte[PlainBytesCount];
+        Encoding.UTF8.GetBytes(PlainText, PlainBytes);
 
         byte[] EncryptedBytes = EncryptWithPassword(PlainBytes, Password, Iterations);
         return EncryptedBytes;
