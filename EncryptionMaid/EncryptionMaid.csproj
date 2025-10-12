@@ -18,6 +18,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageTags>encryption;GCM;CBC;HMAC;symmetric encryption</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup>
