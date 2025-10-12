@@ -74,6 +74,36 @@ public static class AesGcmMaid {
         return EncryptedBytes;
     }
     /// <summary>
+    /// Converts the plain text to encrypted bytes using the given key.
+    /// </summary>
+    /// <remarks>
+    /// The plain text is converted to plain bytes using UTF-8.
+    /// </remarks>
+    /// <param name="PlainText">
+    /// The plain text to encrypt and authenticate.
+    /// </param>
+    /// <param name="Key">
+    /// The encryption key. Must be a supported length (16, 24, or 32 bytes).
+    /// </param>
+    /// <param name="Metadata">
+    /// Optional metadata that should be authenticated but not encrypted or included in the result.
+    /// </param>
+    /// <returns>
+    /// The encrypted bytes in the format: <c>nonce(12) + ciphertext + tag(16)</c>.
+    /// </returns>
+    /// <exception cref="PlatformNotSupportedException"/>
+    /// <exception cref="CryptographicException"/>
+    public static byte[] EncryptString(scoped ReadOnlySpan<char> PlainText, scoped ReadOnlySpan<byte> Key, scoped ReadOnlySpan<byte> Metadata = default) {
+        int PlainBytesCount = Encoding.UTF8.GetByteCount(PlainText);
+        Span<byte> PlainBytes = PlainBytesCount <= StackAllocMaxSize
+            ? stackalloc byte[PlainBytesCount]
+            : new byte[PlainBytesCount];
+        Encoding.UTF8.GetBytes(PlainText, PlainBytes);
+
+        byte[] EncryptedBytes = Encrypt(PlainBytes, Key, Metadata);
+        return EncryptedBytes;
+    }
+    /// <summary>
     /// Converts the plain bytes to encrypted bytes using the given password.
     /// </summary>
     /// <remarks>
@@ -119,7 +149,8 @@ public static class AesGcmMaid {
     /// Converts the plain text to encrypted bytes using the given password.
     /// </summary>
     /// <remarks>
-    /// The plain text and password are converted to bytes using UTF-8.<br/>
+    /// The plain text is converted to plain bytes using UTF-8.<br/>
+    /// The password is converted to bytes using UTF-8.<br/>
     /// The key is derived from the password using PBKDF2 with SHA-256.
     /// </remarks>
     /// <param name="PlainText">
@@ -182,6 +213,34 @@ public static class AesGcmMaid {
         return PlainBytes;
     }
     /// <summary>
+    /// Converts the encrypted bytes to plain text using the given key.<br/>
+    /// Accepts encrypted bytes in the format: <c>nonce(12) + ciphertext + tag(16)</c>.
+    /// </summary>
+    /// <remarks>
+    /// The plain bytes are converted to plain text using UTF-8.
+    /// </remarks>
+    /// <param name="EncryptedBytes">
+    /// The encrypted bytes to decrypt and authenticate.
+    /// </param>
+    /// <param name="Key">
+    /// The encryption key. Must be a supported length (16, 24, 32).
+    /// </param>
+    /// <param name="Metadata">
+    /// Optional metadata that should be authenticated but not encrypted or included in the result.
+    /// </param>
+    /// <returns>
+    /// The decrypted text.
+    /// </returns>
+    /// <exception cref="PlatformNotSupportedException"/>
+    /// <exception cref="CryptographicException"/>
+    /// <exception cref="AuthenticationTagMismatchException"/>
+    public static string DecryptString(scoped ReadOnlySpan<byte> EncryptedBytes, scoped ReadOnlySpan<byte> Key, scoped ReadOnlySpan<byte> Metadata = default) {
+        byte[] PlainBytes = Decrypt(EncryptedBytes, Key, Metadata);
+
+        string PlainText = Encoding.UTF8.GetString(PlainBytes);
+        return PlainText;
+    }
+    /// <summary>
     /// Converts the encrypted bytes to plain bytes using the given password.<br/>
     /// Accepts encrypted bytes in the format: <c>salt(16) + nonce(12) + ciphertext + tag(16)</c>.
     /// </summary>
@@ -227,7 +286,8 @@ public static class AesGcmMaid {
     /// Accepts encrypted bytes in the format: <c>salt(16) + nonce(12) + ciphertext + tag(16)</c>.
     /// </summary>
     /// <remarks>
-    /// The plain bytes and password are converted to bytes using UTF-8.<br/>
+    /// The plain bytes are converted to plain text using UTF-8.<br/>
+    /// The password is converted to bytes using UTF-8.<br/>
     /// The key is derived from the password using PBKDF2 with SHA-256.
     /// </remarks>
     /// <param name="EncryptedBytes">

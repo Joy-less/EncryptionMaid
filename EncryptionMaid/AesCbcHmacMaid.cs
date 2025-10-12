@@ -71,6 +71,32 @@ public static class AesCbcHmacMaid {
         return EncryptedBytes;
     }
     /// <summary>
+    /// Converts the plain text to encrypted bytes using the given key.
+    /// </summary>
+    /// <remarks>
+    /// The plain text is converted to plain bytes using UTF-8.
+    /// </remarks>
+    /// <param name="PlainText">
+    /// The plain text to encrypt.
+    /// </param>
+    /// <param name="Key">
+    /// The encryption key.
+    /// </param>
+    /// <returns>
+    /// The encrypted bytes in the format: <c>iv(16) + ciphertext + hmac(32)</c>.
+    /// </returns>
+    /// <exception cref="CryptographicException"/>
+    public static byte[] EncryptString(scoped ReadOnlySpan<char> PlainText, scoped ReadOnlySpan<byte> Key) {
+        int PlainBytesCount = Encoding.UTF8.GetByteCount(PlainText);
+        Span<byte> PlainBytes = PlainBytesCount <= StackAllocMaxSize
+            ? stackalloc byte[PlainBytesCount]
+            : new byte[PlainBytesCount];
+        Encoding.UTF8.GetBytes(PlainText, PlainBytes);
+
+        byte[] EncryptedBytes = Encrypt(PlainBytes, Key);
+        return EncryptedBytes;
+    }
+    /// <summary>
     /// Converts the plain bytes to encrypted bytes using the given password.
     /// </summary>
     /// <remarks>
@@ -115,7 +141,8 @@ public static class AesCbcHmacMaid {
     /// Converts the plain text to encrypted bytes using the given password.
     /// </summary>
     /// <remarks>
-    /// The plain text and password are converted to bytes using UTF-8.<br/>
+    /// The plain text is converted to plain bytes using UTF-8.<br/>
+    /// The password is converted to bytes using UTF-8.<br/>
     /// The key is derived from the password using PBKDF2 with SHA-256.
     /// </remarks>
     /// <param name="PlainText">
@@ -187,6 +214,30 @@ public static class AesCbcHmacMaid {
         return PlainBytes;
     }
     /// <summary>
+    /// Converts the encrypted bytes to plain text using the given key.<br/>
+    /// Accepts encrypted bytes in the format: <c>iv(16) + ciphertext + hmac(32)</c>.
+    /// </summary>
+    /// <remarks>
+    /// The plain bytes are converted to plain text using UTF-8.
+    /// </remarks>
+    /// <param name="EncryptedBytes">
+    /// The encrypted bytes to decrypt and authenticate.
+    /// </param>
+    /// <param name="Key">
+    /// The encryption key.
+    /// </param>
+    /// <returns>
+    /// The decrypted text.
+    /// </returns>
+    /// <exception cref="CryptographicException"/>
+    /// <exception cref="AuthenticationTagMismatchException"/>
+    public static string DecryptString(scoped ReadOnlySpan<byte> EncryptedBytes, scoped ReadOnlySpan<byte> Key) {
+        byte[] PlainBytes = Decrypt(EncryptedBytes, Key);
+
+        string PlainText = Encoding.UTF8.GetString(PlainBytes);
+        return PlainText;
+    }
+    /// <summary>
     /// Converts the encrypted bytes to plain bytes using the given password.<br/>
     /// Accepts encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext + hmac(32)</c>.
     /// </summary>
@@ -231,7 +282,8 @@ public static class AesCbcHmacMaid {
     /// Accepts encrypted bytes in the format: <c>salt(16) + iv(16) + ciphertext + hmac(32)</c>.
     /// </summary>
     /// <remarks>
-    /// The plain bytes and password are converted to bytes using UTF-8.<br/>
+    /// The plain bytes are converted to plain text using UTF-8.<br/>
+    /// The password is converted to bytes using UTF-8.<br/>
     /// The key is derived from the password using PBKDF2 with SHA-256.
     /// </remarks>
     /// <param name="EncryptedBytes">
