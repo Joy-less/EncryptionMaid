@@ -23,6 +23,9 @@ byte[] EncryptedBytes = AesGcmMaid.EncryptStringWithPassword(Input, Password, 60
 string DecryptedInput = AesGcmMaid.DecryptStringWithPassword(EncryptedBytes, Password, 600_000);
 ```
 
+> [!WARNING]
+> As of .NET 10.0, AES-GCM is not supported on browser platforms.
+
 ## Disclaimer
 
 This implementation has been tested but not audited, so use at your own risk.
