@@ -197,10 +197,13 @@ public static class AesGcmMaid {
     /// <returns>
     /// The decrypted bytes.
     /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException"/>
     /// <exception cref="PlatformNotSupportedException"/>
     /// <exception cref="CryptographicException"/>
     /// <exception cref="AuthenticationTagMismatchException"/>
     public static byte[] Decrypt(scoped ReadOnlySpan<byte> EncryptedBytes, scoped ReadOnlySpan<byte> Key, scoped ReadOnlySpan<byte> Metadata = default) {
+        ArgumentOutOfRangeException.ThrowIfLessThan(EncryptedBytes.Length, NonceSize + TagSize);
+
         ReadOnlySpan<byte> Nonce = EncryptedBytes[..NonceSize];
         ReadOnlySpan<byte> Tag = EncryptedBytes[^TagSize..];
         ReadOnlySpan<byte> CipherBytes = EncryptedBytes[NonceSize..^TagSize];
@@ -264,10 +267,13 @@ public static class AesGcmMaid {
     /// <returns>
     /// The decrypted bytes.
     /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException"/>
     /// <exception cref="PlatformNotSupportedException"/>
     /// <exception cref="CryptographicException"/>
     /// <exception cref="AuthenticationTagMismatchException"/>
     public static byte[] DecryptWithPassword(scoped ReadOnlySpan<byte> EncryptedBytes, scoped ReadOnlySpan<char> Password, int Iterations) {
+        ArgumentOutOfRangeException.ThrowIfLessThan(EncryptedBytes.Length, DerivedSaltSize + NonceSize + TagSize);
+
         int PasswordBytesCount = Encoding.UTF8.GetByteCount(Password);
         Span<byte> PasswordBytes = PasswordBytesCount <= StackAllocMaxSize
             ? stackalloc byte[PasswordBytesCount]
